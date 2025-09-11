@@ -179,6 +179,52 @@ Reset condition:
 
 
 -------------------------------------------------------------------------------------------------------------------------
+UART wrapper:
+
+overview:
+
+This holds together the tramsmitter and the reciever modules .Facilitates the serial communication with TX and RX using AXI4 as 
+the primary interface. interface AXI stream signals for input data and output and uses UART for serial communication.
+
+Features :
+Configurable Baud rates and data widths.
+
+PARAMETER 			TYPE 		SIZE
+
+DATAWIDTH			Integer		8 bit
+
+SIGNAL								FUNCTION
+
+clk 					INPUT				1-bit 		drives the synchronous operation of the system.
+rst 					INPUT				1-bit 		resets the flip-flops and registers in the design.
+s_axis_tdata			INPUT				8-bit		Input to the UART from the AXI interface.
+S_axis_tvalid			INPUT				1-bit		Validity of the data from the AXI4.
+S_axis_tready			INPUT				1-bit		AXI4 signal to indicate UART TX is ready .
+m_axis_tdata			OUTPUT				1-bit		AXI4 O/P data recived from UART.
+m_axis_tvalid			OUTPUT				1-bit		AXI4 signal indicating valid O/P.
+m_axis_tready			OUTPUT				1-bit		AXI4 signal indicating UART RX is ready to accept data.
+rxd						INPUT				1-bit		UART input.
+txd						INPUT				1-bit		UART output.
+tx_busy					OUTPUT				1-bit		Indicates the UART TX is busy.
+rx_busy					OUTPUT				1-bit		Indicates the UART RX is busy.
+rx_overrun_error		OUTPUT				1-bit		Indicates new data arrived before previous data was fully read.
+rx_frame_error			OUTPUT				1-bit		Indicates invalid stop .
+prescale				INPUT				1-bit		Configurable Input for timing control.
+
+
+Interal Architecture:
+This wrapper contains UART RX and UART TX with the connections as follows:
+
+UART TX :
+	Inputs -> clk,rst,s_axis_tdata,s_axis_tvalid,prescale.
+	Output -> s_axis_tready,txd,tx_busy.
+	
+UART_RX :
+	Inputs -> clk, rst, m_axis_tready,prescale.
+	Outputs -> m_axis_tdata,m_axis_tvalid,rx_busy,rx_overrun_error,rx_frame_error.
+	
+
+-----------------------------------------------------------------------------------------------------------------------------
 
 
 
