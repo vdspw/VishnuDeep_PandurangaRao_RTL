@@ -1,0 +1,187 @@
+AXI4 STREAM UART_RX TECHNICAL SPECIFICATION: (Reciver module) 
+
+
+INTRODUCTION:
+
+The AXI4 stream and UART is a design that contains AXI4 signals at the top level and UART signals at the core.
+This is a communication protocol, used in talking to perihperals and has its applications mostly in handling 
+Embedded Systems with supoort for configurabel baud rates.
+
+The AXI4 stream is the main interface to the user.This directory contains the Verilog HDL implementation of the
+AXI4 stream and UART.
+
+The main function of this design is to convert the seriel UART data into AXI stream parallel data.
+
+UART protocol Overview:
+
+The UART module is divided into TX (transmitter) and RX (reciever)and has a wrapper binding them together by a
+number of instantiations.They use a single pin to send and recive data Sending and reciving are not simulatainous
+operations i.e serial communication.In our design the size of the data is 8-bit.
+
+
+MODULE Overview:
+
+PARAMETER 			TYPE 		SIZE
+
+DATAWIDTH			Integer		8 bits
+
+
+SIGNAL				DIRECTION				SIZE 		FUNCTION
+
+clk 					INPUT				1-bit 		drives the synchronous operation of the system.
+rst 					INPUT				1-bit 		resets the flip-flops and registers in the design.
+rxd						INPUT				1-bit 		this the START signal equivalent of the UART(active low).
+m_axis_tready			INPUT				1-bit		AXI4 stream signal indicates the RX is ready for communication.
+prescale				INPUT				16-bit		Timing control for baud rates.
+
+m_axis_tdata			OUTPUT				8-bit		Recived data in AXI4 format.
+m_axis_tvalid			OUTPUT				1-bit		Indicates validity.
+busy					OUTPUT 				1-bit		Indicates module in use.
+overrun_error			OUTPUT				1-bit		When the new data comes before previous consumed .
+frame_error				OUTPUT				1-bit		Invalid STOP in UART operation.
+
+
+
+Functionality overview :
+
+UART data format : {START BIT , DATA BITS , STOP BIT }
+Data bits = 8 ; Start bit and start bit are 1-bit each 
+Tatal length of the recieved data = 10 bits
+
+In the design rxd is the start bit to the UART which is an active low signal, whenver this is low the UART_RX module 
+starts operation and the STOP is active high signal when high the UART function stops.
+
+This design is pipelined and it requires internal reigsters to store the data:( INTERNAL ARCHITECTURE)
+
+REGISTERS 											FUNCTION
+
+m_axis_tdata		8-bit						Holds the data for the output
+m_axis_tvalid		1-bit						To sotre the validity bit before passing it on to the output port.
+rxd_reg				1-bit						Holds the rxd input and used to snychronize this with the clk.
+busy_reg			1-bit						Holds the busy bit value before passing it to the output.
+overrun_error_reg	1-bit						To store the error flag value.
+frame_error			1-bit						To store the error flag	value.
+data_reg			8-bit						Accumilates data on reciving .
+prescale_reg		19-bit						Timing counter.
+bit_cnt				4-bit						Tracks the number of bits remaining to complete the operation.(decrements during operation).
+
+State Machine (FSM operation)
+
+The FSM is controlled by bit_cnt :
+1. bit_cnt = 0 : IDLE State :waiting for rxd to go low.
+2. bit_cnt = DATAWIDTH +2 : START bit is obtained,sampling at 8x oversampling rate.
+3. bit_cnt from 2 to 9 : DATA bits :sampled at midpoint of each bit period.
+4. bit_cnt = 1 : STOP bit is obtained : checks for rdx high.
+
+The state transtion:
+IDLE -> START -> DATA -> STOP ->IDLE.
+
+Timing :
+
+Clk -- Any frequency , prescale should be used to set a valid baud rate.
+reset--Synchronous , active high, duration is 1 clk cycle
+
+
+Detailed Operation :
+
+The design operates on positive edge of the CLK.
+
+RESET operation :
+1. When the reset is High
+The data on all the registers become 0 expect rxd_reg because its active low.
+
+NON RESET operation:
+1. Synchronize the rxd_reg with rxd input value.(avoids metastability).
+2. Reset the error flags.(overrun_error_reg & frame_error_reg).
+3. AXI handshake operation: The AXI output is considered valid only when m_axis_tready and m_axis_tvalid 
+   are HIGH. Reset the t_valid register .
+4. Load prescale_reg with the prescale input for baud rate timing.
+5. When rxd_reg goes low,set bit_cnt as 10 and start sampling at 8x oversampling.
+6. When bit_cnt is greater than 1 , data is contactinated as follows {start , data_reg} //stop bit not considered.
+7. When bit_cnt is equal to 1 and rxd_reg is High transfer the data from the data_reg to the m_axis_tdata_reg and
+   set the validity to 1 .
+8. When new data arrives while m_axis_tvalid is High and m_axis_tready is low, set overrun_error_reg to 1.
+ 
+-------------------------------------------------------------------------------------------------------------------------------
+
+AXI4 STREAM UART_RX TECHNICAL SPECIFICATION: (Transmitter module) 
+
+Introduction:
+
+This is a UART transmitter module which is interfaced with the AXI4 stream . The basic function of this module is to take the 
+parallel data from AXI interface and transmit it serially .
+
+It contains STOP and START bit exactly like the data format mentioned in the reciver spec.
+
+
+MODULE overview:
+
+PARAMETER 			TYPE 		SIZE
+
+DATAWIDTH			Integer		8 bits
+
+
+SIGNAL				DIRECTION				SIZE 		FUNCTION
+
+clk 					INPUT				1-bit 		drives the synchronous operation of the system.
+rst 					INPUT				1-bit 		resets the flip-flops and registers in the design.
+txd						OUTPUT				1-bit 		Serial transmission Output.
+s_axis_tready			INPUT				1-bit		AXI4 stream signal indicates the TX is ready for communication.
+prescale				INPUT				16-bit		Timing control for baud rates.
+
+s_axis_tdata			OUTPUT				8-bit		Input data in AXI4 format.
+s_axis_tvalid			INPUT				1-bit		Indicates validity.
+busy					OUTPUT 				1-bit		Indicates module in use.
+
+Internal ARCHITECTURE :
+
+REGISTERS:												FUNCTION
+
+s_axis_tready_reg		1-bit 					Register driving s_axis_tready Output.
+txd_reg					1-bit					Register driving txd output.
+busy_reg				1-bit					Drives data to busy output.
+data_reg				8-bit					Stores data to be transmitted .
+prescale_reg			19-bit					conuter for timing .
+bit_cnt					4-bit					Counter to keep track of the number of bits reamaining.
+
+
+State Machine (FSM operation)
+
+The FSM is controlled by bit_cnt :
+1. bit_cnt = 0 : IDLE State :waiting for rxd to go low.
+2. bit_cnt = DATAWIDTH +2 : START bit is obtained,sampling at 8x oversampling rate.
+3. bit_cnt from 2 to 9 : DATA bits :sampled at midpoint of each bit period.
+4. bit_cnt = 1 : STOP bit is obtained : checks for rdx high.
+
+The state transtion:
+IDLE -> START -> DATA -> STOP ->IDLE.
+
+Timing :
+
+Clk -- Any frequency , prescale should be used to set a valid baud rate.
+reset--Synchronous , active high, duration is 1 clk cycle
+
+
+Detailed Operation :
+
+1. The design operates on poistive edge of the clk.
+
+Reset condition:
+1. When the reset is High
+   The data on all the registers become 0 expect txd_reg because its active low.
+
+2. Idle state and AXI4 handshake.Synchronize txd to txd_reg to avoid metastability.
+3. Reset the error flags.(overrun_error_reg & frame_error_reg).
+4. AXI handshake operation: The AXI output is considered valid only when s_axis_tready and m_axis_tvalid 
+   are HIGH. Reset the t_valid register .
+5. Start data transmission with all the bits .[10 -bits start ,data, stop].
+6. Stop when all the bits are done , bit_cnt becomes 0.
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
