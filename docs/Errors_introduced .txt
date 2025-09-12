@@ -1,0 +1,42 @@
+ERROR 1 : --- UART RX
+
+1. Initializing the pipelining registers with the wrong values.
+	Initializing the (rxd) in the reciever with 1 gets a wrong functionality .
+	This issue should be resolved by the reading the tech spec.
+
+ERROR 2 : --- UART TX
+
+1. Initializing the pipelining registers with the wrong values.
+	Initializing the (txd) in the transmitter with 1 gets a wrong functionality .
+	This issue should be resolved by the reading the tech spec.
+	
+ERROR 3 : --- UART RX
+
+1. Based on AXI4 specification the valid and ready must be HIGH.
+	Not earsing the previous value in the t_valid reg creates functional issue.
+	The AXI handshake forms a vital part in the spec given and issue should be resolve from the spec.
+	
+ERROR 4: --- UART RX
+
+1. Introduce blocking statements in the always block .
+	This is going to synthesize but simulation fails. Depends on the tools used.
+	The vitality of this error is low as its present in the end of the always , present in the last else condition.
+
+ERROR 5: --- UART RX
+
+1. Leaving an undriven signal , should cause a synthesis error. 
+	But this code synthsized on yosys , may not work on Synposis tools. 
+	 m_axis_tdata_reg <= data_reg; // discarded line
+	 
+ERROR 6: ---- UART TX
+
+1. Introducing a combinational block instead of the sequential block .
+	This should give synthesis errors and simulation errors .
+	But worked on Yosys ( may not work on Synposis).
+	
+ERROR 7: --- UART TX
+
+1. A logical error where the bit_cnt is incremented instead of decremented.
+	Should be infferred from the logic in the rest of the code or the spec.
+	
+	

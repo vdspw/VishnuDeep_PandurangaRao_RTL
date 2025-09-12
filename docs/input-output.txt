@@ -1,0 +1,12 @@
+I want to create a rectified AXI4 stream UART module ,which comprises of a top module (uart)
+RL-env-for-AXI4-stream-UART/RTL_err/uart.v 
+the submodules tx (uart_tx)RTL_err/UART_tx.v and (uart_rx) RTL_err/UART_rx.v , Which operates at 4 x oversampling and the START 
+bit and STOP bit must be sampled at the same timing scale. Interchange the active high and active 
+low Start signals during the operation this is the exact oppsite of the spec. For reference use the technical specification at docs/AXI4 UART tech spec.
+Provide a synthesizable design .
+Give 2 designs in the first stage follow the spec and resolve the errors present in the above mentioned source files and in the second stage work on the
+sampling rate as mentioned above and make the design to be start functioning with active high signals.
+
+expected outcome:
+STAGE 1 : The designs in the RTL ref folder.
+STAGE 2 : The design in the RTL exp folder. 
