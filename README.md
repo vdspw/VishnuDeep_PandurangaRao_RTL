@@ -8,9 +8,14 @@ DOCS folder:
 2. Error locations and descriptions.
 3. Potenitial solutions to these errors.
 
+Verification folder:
+1. Contains the testbench.sv 
+
+
 Overview :
 The base design of AXI4 stream for UART is used and the orginal design is the reference and 
 the technical specifications are written based on this ( RTL_ref) . Based on the technical spec
 and the Errors introduced should be resolved to bring the design to the level of RTL_ref.
 The second stage solution is about altering the design specifications by changing the sampling rate to 4x
 on all operations and changing the active low initiated design into active high initiated one.
+The final output from the stage 2 should have a succesful simulation on the testbench.sv provided in the verification floder.
