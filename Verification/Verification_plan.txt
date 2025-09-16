@@ -1,0 +1,30 @@
+Verification plan : RTL-exp
+
+RTL desicription: AXI4 stream with UART for converting the parallel data to serially transmitted bits.
+
+The focus of the testbench:
+
+1. The main aim is to verify the changed specifications 
+
+2. The TXD and RXD are active high signals which are active low in the orginal design.
+	--- This can be viewed on the waveform 
+	Further description:
+	1. Tx busy , rx busy flags are --HIGH .
+	2. TX and RX signals -- HIGH.
+	
+3. The AXI signals responsible for the handshake verifed.
+	Further description:
+	1. The Handshake is suscessful.
+	2. The ready and valid signals are HIGH enabling operation .
+	
+4. Comparing the transmitted data against the recived data.
+	1. This is successful on the console , but unable to see
+		the m_axis_data on the waveform.
+		
+
+Tools used : Synopsys VCS, Aldec.
+
+If the design generated passes this basic testbench its statisfying most of the conditions.
+
+
+	
